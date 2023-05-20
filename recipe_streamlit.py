@@ -120,11 +120,20 @@ def recommend_recipes(recipe_name, dietary_restrictions=None, top_n=5):
     recommended_recipes = recommended_recipes.drop_duplicates(subset=['name']).head(top_n)
 
     return recommended_recipes
+
+
+
 def main():
     st.title("Recipe Recommender")
 
+    # Sidebar with examples of sample inputs
+    st.sidebar.subheader("Sample Inputs:")
+    sample_recipes = recipes_df.sample(10)  # Get random sample recipes from the dataset
+    sample_options = sample_recipes['name'].tolist()
+    selected_option = st.sidebar.selectbox("Select a sample input:", sample_options, index=0, help="Scroll to view more options")
+
     # Get user input
-    recipe_name = st.text_input("Enter the recipe name:")
+    recipe_name = st.text_input("Enter the recipe name:", selected_option)
     dietary_restrictions = []
     if st.checkbox("Gluten-Free"):
         dietary_restrictions.append("gluten")
@@ -132,14 +141,23 @@ def main():
         dietary_restrictions.append("dairy")
 
     # Recommend recipes based on user input
-    recommended_recipes = recommend_recipes(recipe_name, dietary_restrictions)
+    def recommend():
+        recommended_recipes = recommend_recipes(recipe_name, dietary_restrictions)
 
-    # Display recommended recipes
-    if recommended_recipes is None:
-        st.warning("Recipe not found in the dataset.")
-    else:
-        st.subheader("Recommended Recipes:")
-        st.write(recommended_recipes)
+        # Display recommended recipes
+        if recommended_recipes is None:
+            st.warning("Recipe not found in the dataset.")
+        else:
+            st.subheader("Recommended Recipes:")
+            recommended_recipes = recommended_recipes.dropna(subset=['name', 'process', 'ingredient'])  # Remove rows with NaN values
+            for index, recipe in recommended_recipes.iterrows():
+                st.subheader(f"{recipe['name']}")  # Bold the recipe name
+                st.write(f"Ingredients: {recipe['ingredient']}")
+                st.write('---')
+
+    # Add a "Recommend" button
+    if st.button("Recommend"):
+        recommend()
 
 if __name__ == "__main__":
     main()
